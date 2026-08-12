@@ -1,0 +1,27 @@
+name: 打包 DMG
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: 设置打包环境
+        run: |
+          mkdir -p dist
+          cp "一见钟情.html" dist/
+          
+      - name: 创建 DMG
+        run: |
+          hdiutil create -srcfolder dist -volname "未定Wiki" -format UDZO "未定Wiki_v1.0.dmg"
+          
+      - name: 上传 DMG 到发布页
+        uses: softprops/action-gh-release@v1
+        with:
+          files: 未定Wiki_v1.0.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
