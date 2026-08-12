@@ -1,0 +1,59 @@
+name: 打包 HTML 为 DMG
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 安装打包工具
+        run: |
+          npm install -g nativefier
+          npm install -g create-dmg
+
+      - name: 构建 macOS 应用
+        run: |
+          nativefier \
+            --name "一见钟情" \
+            --platform mac \
+            --arch universal \
+            --single-instance \
+            --fast-quit \
+            "file://${PWD}/moyi.html" \
+            ./build
+
+      - name: 打包为 DMG
+        run: |
+          create-dmg \
+            --volname "一见钟情" \
+            --window-size 800 600 \
+            --icon-size 128 \
+            "一见钟情.dmg" \
+            "./build/一见钟情.app"
+
+      - name: 上传 DMG 到 Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: 一见钟情安装包
+          path: 一见钟情.dmg
+
+      - name: 创建 Release 并上传
+        uses: softprops/action-gh-release@v1
+        with:
+          files: 一见钟情.dmg
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
